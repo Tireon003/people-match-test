@@ -1,19 +1,18 @@
 from sqlalchemy import (
     String,
-    LargeBinary,
+    Float,
 )
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
 )
-from enum import Enum
 
 from .base import Base
 
-
-class Gender(Enum):
-    male: str = 'male'
-    female: str = 'female'
+from app.schemas import (
+    Gender,
+)
+import uuid
 
 
 class MembersORM(Base):
@@ -38,7 +37,15 @@ class MembersORM(Base):
         String(64),
         nullable=False,
     )
-    avatar: Mapped[LargeBinary]
+    avatar: Mapped[uuid.UUID]
     hashed_password: Mapped[str] = mapped_column(
+        nullable=False,
+    )
+    lat: Mapped[float] = mapped_column(
+        Float(4),
+        nullable=False,
+    )
+    lon: Mapped[float] = mapped_column(
+        Float(4),
         nullable=False,
     )
