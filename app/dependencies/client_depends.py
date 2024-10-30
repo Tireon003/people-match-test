@@ -1,6 +1,5 @@
 from typing import (
     Callable,
-    TypeVar,
 )
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession

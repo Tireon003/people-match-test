@@ -5,7 +5,7 @@ from app.repositories import ClientRepository
 from app.schemas import (
     MemberCreateForm,
     MemberCreateSchema,
-    MemberFromDB, MemberLogin, Payload,
+    MemberFromDB, MemberLogin, Payload, MembersFilter,
 )
 from app.utils import save_image_with_watermark, HashTool, JwtTool
 
@@ -54,3 +54,17 @@ class ClientService:
             )
             token = JwtTool.generate(payload)
             return token
+
+    async def get_members_list(
+            self,
+            exclude_member: int,
+            filters: MembersFilter,
+    ) -> list[MemberFromDB] | None:
+        members_orm_list = await self.__repo.select_members(
+            filter_schema=filters,
+            exclude_member=exclude_member,
+        )
+        members_list_schema = [
+            MemberFromDB.model_validate(item) for item in members_orm_list
+        ]
+        return members_list_schema

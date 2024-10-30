@@ -4,6 +4,7 @@ from datetime import (
     timezone,
 )
 
+from app.config import settings
 from app.exceptions import ExpiredTokenException
 from app.schemas import Payload
 
@@ -11,7 +12,7 @@ from app.schemas import Payload
 class JwtTool:
 
     ALG: str = 'HS256'
-    SECRET: str = '4qn9j23yb56b5n5nd3g54f43f'  # fixme get from env
+    SECRET: str = settings.SECRET
 
     @classmethod
     def generate(cls, payload: Payload) -> str:
@@ -26,9 +27,10 @@ class JwtTool:
         payload = jwt.decode(
             jwt=token,
             key=cls.SECRET,
-            algorithms=[cls.ALG]
+            algorithms=[cls.ALG],
+            options={
+                'verify_signature': True,
+                'verify_exp': 'verify_signature',
+            }
         )
-        if dt.now(tz=timezone.utc) > payload['exp']:
-            raise ExpiredTokenException()
-        else:
-            return Payload(**payload)
+        return Payload(**payload)

@@ -6,8 +6,8 @@ from fastapi import (
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from jwt import ExpiredSignatureError
 
-from app.exceptions import ExpiredTokenException
 from app.routes import clients_router
 
 
@@ -26,10 +26,10 @@ app.add_middleware(
 app.include_router(clients_router)
 
 
-@app.exception_handler(ExpiredTokenException)
+@app.exception_handler(ExpiredSignatureError)
 async def handle_expired_token_exception(
         request: Request,
-        exc: ExpiredTokenException,
+        exc: ExpiredSignatureError,
 ) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_401_UNAUTHORIZED,
