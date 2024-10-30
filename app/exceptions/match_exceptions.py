@@ -1,0 +1,2 @@
+class MatchAlreadyExistError(Exception):
+    pass

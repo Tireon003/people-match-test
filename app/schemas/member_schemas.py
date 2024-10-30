@@ -49,7 +49,7 @@ class MemberCreateForm(BaseMember):
             email: str = Form(...),
             name: str = Form(...),
             surname: str = Form(...),
-            gender: str = Form(...),
+            gender: Gender = Form(...),  # если что было str
             lat: float = Form(...),
             lon: float = Form(...),
             password: str = Form(...),

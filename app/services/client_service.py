@@ -1,9 +1,11 @@
+from typing import cast
+
 from fastapi import UploadFile
 
 from app.exceptions import (
     EmailAlreadyUsedError,
     WrongPasswordException,
-    MemberNotFoundException,
+    MemberNotFoundException, MatchAlreadyExistError,
 )
 from app.repositories import ClientRepository
 from app.schemas import (
@@ -23,6 +25,7 @@ from app.utils import (
     JwtTool,
     calculate_distance,
 )
+from app.tasks import send_match_notification
 
 
 class ClientService:
@@ -96,14 +99,56 @@ class ClientService:
             members_list_schema = [
                 MemberFromDB.model_validate(member)
                 for member in members_orm_list
-                if (
-                    member.id != for_subject and
-                    calculate_distance(
-                        subject_coords.lat,
-                        subject_coords.lon,
-                        member.lat,
-                        member.lon,
-                    ) < distance
-                )
+                if member.id != for_subject
             ]
+            if distance:
+                members_list_schema = [
+                    member for member in members_list_schema
+                    if (
+                        calculate_distance(
+                            subject_coords.lat,
+                            subject_coords.lon,
+                            member.lat,
+                            member.lon,
+                        ) < int(distance.value)
+                    )
+                ]
             return members_list_schema
+
+    async def match_member(
+            self,
+            from_member: int,
+            with_member: int,
+    ) -> str | None:
+        match = await self.__repo.select_match_by_members(
+            from_member=from_member,
+            with_member=with_member,
+        )
+        if match:
+            raise MatchAlreadyExistError()
+        else:
+            await self.__repo.insert_match(
+                from_member=from_member,
+                with_member=with_member,
+            )
+            mutual_match = await self.__repo.select_match_by_members(
+                from_member=with_member,
+                with_member=from_member,
+            )
+            if mutual_match is not None:
+                from_member_orm = await self.__repo.select_member(from_member)
+                with_member_orm = await self.__repo.select_member(with_member)
+
+                send_match_notification.delay(
+                    email=cast(str, from_member_orm.email),
+                    matched_name=cast(str, with_member_orm.name),
+                    matched_email=cast(str, with_member_orm.email),
+                )
+                send_match_notification.delay(
+                    email=cast(str, with_member_orm.email),
+                    matched_name=cast(str, from_member_orm.name),
+                    matched_email=cast(str, from_member_orm.email),
+                )
+
+                email = cast(str, with_member_orm.email)
+                return email

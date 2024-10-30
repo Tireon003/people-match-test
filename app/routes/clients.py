@@ -7,7 +7,7 @@ from fastapi import (
     UploadFile,
     Depends,
     HTTPException,
-    Form, Query,
+    Form, Query, Path,
 )
 from fastapi.responses import (
     JSONResponse,
@@ -18,7 +18,7 @@ from app.exceptions import (
     BadImageProvidedError,
     MemberNotFoundException,
     WrongPasswordException,
-    EmailAlreadyUsedError,
+    EmailAlreadyUsedError, MatchAlreadyExistError,
 )
 from app.schemas import (
     MemberCreateForm,
@@ -142,3 +142,40 @@ async def get_members_list(
         distance=distance,
     )
     return members
+
+
+@router.post(
+    path="/{member_id}/match",
+    status_code=status.HTTP_200_OK,
+    description="Endpoint to match member",
+)
+async def match_member(
+        payload: Annotated[
+            Payload,
+            Depends(get_token_payload)
+        ],
+        client_service: Annotated[
+            ClientService,
+            Depends(get_client_service(db.get_session)),
+        ],
+        member_id: Annotated[int, Path()],
+) -> JSONResponse:
+    try:
+        email = await client_service.match_member(
+            from_member=payload.sub,
+            with_member=member_id,
+        )
+        response_content = dict(message="Successfully matched")
+        if email:
+            response_content.update(
+                email=email,
+            )
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=response_content,
+        )
+    except MatchAlreadyExistError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Can't match member twice",
+        )

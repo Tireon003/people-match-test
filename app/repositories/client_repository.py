@@ -5,7 +5,7 @@ from sqlalchemy import (
 )
 from typing import Sequence
 
-from app.models import MembersORM
+from app.models import MembersORM, MatchesORM
 from app.schemas import (
     MemberCreateSchema,
     MembersFilter, Coordinates, Gender, OrderBy,
@@ -61,3 +61,34 @@ class ClientRepository:
     async def select_member(self, member_id: int) -> MembersORM | None:
         member = await self.__session.get(MembersORM, member_id)
         return member
+
+    async def insert_match(
+            self,
+            from_member: int,
+            with_member: int,
+    ) -> MatchesORM:
+        match = MatchesORM(
+            from_member=from_member,
+            with_member=with_member,
+        )
+        self.__session.add(match)
+        await self.__session.flush()
+        await self.__session.refresh(match)
+        await self.__session.commit()
+        return match
+
+    async def select_match_by_members(
+            self,
+            from_member: int,
+            with_member: int
+    ) -> MatchesORM | None:
+        stmt = (
+            select(MatchesORM)
+            .filter_by(
+                from_member=from_member,
+                with_member=with_member,
+            )
+        )
+        result = await self.__session.scalars(stmt)
+        match = result.one_or_none()
+        return match

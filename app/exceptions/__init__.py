@@ -7,6 +7,9 @@ from .authentication_exceptions import (
     WrongPasswordException,
     MemberNotFoundException,
 )
+from .match_exceptions import (
+    MatchAlreadyExistError,
+)
 
 
 __all__ = (
@@ -15,4 +18,5 @@ __all__ = (
     'ExpiredTokenException',
     'WrongPasswordException',
     'MemberNotFoundException',
+    'MatchAlreadyExistError',
 )

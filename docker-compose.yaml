@@ -1,0 +1,58 @@
+services:
+  match_cache:
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+    restart: on-failure
+    env_file: .env
+    networks:
+      - webnet
+
+  match_pg:
+    image: postgres:17.0
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    ports:
+       - 5932:${DB_PORT}
+    restart: on-failure
+    env_file: .env
+    volumes:
+      - ./match_pg:/var/lib/postgresql/data
+    networks:
+      - webnet
+
+  match_api:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    command: bash -c "alembic upgrade head & uvicorn app.main:app --host 5932 --port $API_PORT"
+    ports:
+      - ${API_PORT}:${API_PORT}
+    depends_on:
+      - match_cache
+      - match_pg
+    restart: on-failure
+    env_file: .env
+    networks:
+      - webnet
+
+  match_celery:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    command: celery -A app.tasks.bg_tasks:celery worker --loglevel=INFO
+    depends_on:
+      - match_cache
+      - match_pg
+    restart: on-failure
+    networks:
+      - webnet
+
+
+volumes:
+  msg_db:
+
+networks:
+  webnet:
