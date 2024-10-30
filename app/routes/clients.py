@@ -7,7 +7,7 @@ from fastapi import (
     UploadFile,
     Depends,
     HTTPException,
-    Form,
+    Form, Query,
 )
 from fastapi.responses import (
     JSONResponse,
@@ -25,7 +25,7 @@ from app.schemas import (
     MembersFilter,
     MemberFromDB,
     MemberLogin,
-    Payload,
+    Payload, Gender, OrderBy, Distance,
 )
 from app.dependencies import (
     get_client_service,
@@ -123,17 +123,22 @@ async def get_members_list(
             Payload,
             Depends(get_token_payload)
         ],
-        members_filter: Annotated[
-            MembersFilter,
-            Body()
-        ],
         client_service: Annotated[
             ClientService,
             Depends(get_client_service(db.get_session)),
         ],
+        name: str | None = Query(default=None),
+        surname: str | None = Query(default=None),
+        order_by: OrderBy | None = Query(default=None),
+        distance: Distance | None = Query(default=None),
+        gender: Gender | None = Query(default=None),
 ) -> list[MemberFromDB] | None:
     members = await client_service.get_members_list(
-        exclude_member=payload.sub,
-        filters=members_filter,
+        for_subject=payload.sub,
+        gender=gender,
+        name=name,
+        surname=surname,
+        order_by=order_by,
+        distance=distance,
     )
     return members

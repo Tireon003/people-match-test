@@ -7,7 +7,11 @@ from pydantic import (
     Field
 )
 
-from app.schemas import Gender, OrderBy
+from app.schemas import (
+    Gender,
+    OrderBy,
+    Distance,
+)
 
 
 class BaseMember(BaseModel):
@@ -96,3 +100,9 @@ class MembersFilter(BaseModel):
         default=None,
     )
     order_by: OrderBy | None = Field(default=None)
+    distance: Distance | None = Field(default=None)
+
+
+class Coordinates(BaseModel):
+    lat: int | float
+    lon: int | float

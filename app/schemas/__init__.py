@@ -1,6 +1,7 @@
 from .enums import (
     Gender,
     OrderBy,
+    Distance,
 )
 from .member_schemas import (
     MemberCreateSchema,
@@ -8,6 +9,7 @@ from .member_schemas import (
     MemberCreateForm,
     MemberLogin,
     MembersFilter,
+    Coordinates,
 )
 from .token_schemas import Payload
 
@@ -21,4 +23,6 @@ __all__ = (
     'MemberLogin',
     'Payload',
     'OrderBy',
+    'Distance',
+    'Coordinates',
 )

@@ -1,13 +1,28 @@
 from fastapi import UploadFile
 
-from app.exceptions import EmailAlreadyUsedError, WrongPasswordException, MemberNotFoundException
+from app.exceptions import (
+    EmailAlreadyUsedError,
+    WrongPasswordException,
+    MemberNotFoundException,
+)
 from app.repositories import ClientRepository
 from app.schemas import (
     MemberCreateForm,
     MemberCreateSchema,
-    MemberFromDB, MemberLogin, Payload, MembersFilter,
+    MemberFromDB,
+    MemberLogin,
+    Payload,
+    Coordinates,
+    Gender,
+    OrderBy,
+    Distance,
 )
-from app.utils import save_image_with_watermark, HashTool, JwtTool
+from app.utils import (
+    save_image_with_watermark,
+    HashTool,
+    JwtTool,
+    calculate_distance,
+)
 
 
 class ClientService:
@@ -57,14 +72,38 @@ class ClientService:
 
     async def get_members_list(
             self,
-            exclude_member: int,
-            filters: MembersFilter,
+            for_subject: int,
+            gender: Gender | None,
+            name: str | None,
+            surname: str | None,
+            order_by: OrderBy | None,
+            distance: Distance | None,
     ) -> list[MemberFromDB] | None:
-        members_orm_list = await self.__repo.select_members(
-            filter_schema=filters,
-            exclude_member=exclude_member,
-        )
-        members_list_schema = [
-            MemberFromDB.model_validate(item) for item in members_orm_list
-        ]
-        return members_list_schema
+        subject = await self.__repo.select_member(for_subject)
+        if not subject:
+            raise MemberNotFoundException()
+        else:
+            members_orm_list = await self.__repo.select_members(
+                gender=gender,
+                name=name,
+                surname=surname,
+                order_by=order_by,
+            )
+            subject_coords = Coordinates(
+                lat=subject.lat,
+                lon=subject.lon,
+            )
+            members_list_schema = [
+                MemberFromDB.model_validate(member)
+                for member in members_orm_list
+                if (
+                    member.id != for_subject and
+                    calculate_distance(
+                        subject_coords.lat,
+                        subject_coords.lon,
+                        member.lat,
+                        member.lon,
+                    ) < distance
+                )
+            ]
+            return members_list_schema
