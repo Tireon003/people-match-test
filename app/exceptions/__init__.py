@@ -9,6 +9,7 @@ from .authentication_exceptions import (
 )
 from .match_exceptions import (
     MatchAlreadyExistError,
+    MatchLimitReachedError,
 )
 
 
@@ -19,4 +20,5 @@ __all__ = (
     'WrongPasswordException',
     'MemberNotFoundException',
     'MatchAlreadyExistError',
+    'MatchLimitReachedError',
 )

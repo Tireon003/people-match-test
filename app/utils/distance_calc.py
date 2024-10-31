@@ -1,6 +1,8 @@
 import math
+from fastapi_cache.decorator import cache
 
 
+@cache(expire=120)
 def calculate_distance(
         lat1: int | float,
         lon1: int | float,

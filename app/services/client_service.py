@@ -1,11 +1,14 @@
 from typing import cast
-
+from redis import asyncio as aioredis
 from fastapi import UploadFile
 
+from app.config import settings
 from app.exceptions import (
     EmailAlreadyUsedError,
     WrongPasswordException,
-    MemberNotFoundException, MatchAlreadyExistError,
+    MemberNotFoundException,
+    MatchAlreadyExistError,
+    MatchLimitReachedError,
 )
 from app.repositories import ClientRepository
 from app.schemas import (
@@ -24,6 +27,7 @@ from app.utils import (
     HashTool,
     JwtTool,
     calculate_distance,
+    increment_matches,
 )
 from app.tasks import send_match_notification
 
@@ -32,6 +36,7 @@ class ClientService:
 
     def __init__(self, repository: ClientRepository):
         self.__repo = repository
+        self.__redis = aioredis.from_url(settings.REDIS_URL)
 
     async def create_member(
             self,
@@ -105,12 +110,12 @@ class ClientService:
                 members_list_schema = [
                     member for member in members_list_schema
                     if (
-                        calculate_distance(
+                        await calculate_distance(
                             subject_coords.lat,
                             subject_coords.lon,
                             member.lat,
                             member.lon,
-                        ) < int(distance.value)
+                        ) < float(distance.value)
                     )
                 ]
             return members_list_schema
@@ -127,6 +132,9 @@ class ClientService:
         if match:
             raise MatchAlreadyExistError()
         else:
+            limit_reached = await increment_matches(from_member)
+            if limit_reached:
+                raise MatchLimitReachedError()
             await self.__repo.insert_match(
                 from_member=from_member,
                 with_member=with_member,
@@ -152,3 +160,4 @@ class ClientService:
 
                 email = cast(str, with_member_orm.email)
                 return email
+            return None

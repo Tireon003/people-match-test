@@ -1,11 +1,6 @@
 import jwt
-from datetime import (
-    datetime as dt,
-    timezone,
-)
 
 from app.config import settings
-from app.exceptions import ExpiredTokenException
 from app.schemas import Payload
 
 

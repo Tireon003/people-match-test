@@ -1,5 +1,4 @@
 import uuid
-
 from fastapi import Form
 from pydantic import (
     BaseModel,
@@ -9,8 +8,6 @@ from pydantic import (
 
 from app.schemas import (
     Gender,
-    OrderBy,
-    Distance,
 )
 
 
@@ -49,7 +46,7 @@ class MemberCreateForm(BaseMember):
             email: str = Form(...),
             name: str = Form(...),
             surname: str = Form(...),
-            gender: Gender = Form(...),  # если что было str
+            gender: Gender = Form(...),
             lat: float = Form(...),
             lon: float = Form(...),
             password: str = Form(...),
@@ -85,22 +82,6 @@ class MemberLogin(BaseModel):
     password: str = Field(
         min_length=8,
     )
-
-
-class MembersFilter(BaseModel):
-    gender: Gender | None = Field(default=None)
-    name: str | None = Field(
-        min_length=2,
-        max_length=64,
-        default=None,
-    )
-    surname: str | None = Field(
-        min_length=2,
-        max_length=64,
-        default=None,
-    )
-    order_by: OrderBy | None = Field(default=None)
-    distance: Distance | None = Field(default=None)
 
 
 class Coordinates(BaseModel):

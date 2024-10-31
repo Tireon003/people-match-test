@@ -1,5 +1,3 @@
-import json
-
 from fastapi import (
     APIRouter,
     Body,
@@ -7,7 +5,8 @@ from fastapi import (
     UploadFile,
     Depends,
     HTTPException,
-    Form, Query, Path,
+    Query,
+    Path,
 )
 from fastapi.responses import (
     JSONResponse,
@@ -18,14 +17,18 @@ from app.exceptions import (
     BadImageProvidedError,
     MemberNotFoundException,
     WrongPasswordException,
-    EmailAlreadyUsedError, MatchAlreadyExistError,
+    EmailAlreadyUsedError,
+    MatchAlreadyExistError,
+    MatchLimitReachedError,
 )
 from app.schemas import (
     MemberCreateForm,
-    MembersFilter,
     MemberFromDB,
     MemberLogin,
-    Payload, Gender, OrderBy, Distance,
+    Payload,
+    Gender,
+    OrderBy,
+    Distance,
 )
 from app.dependencies import (
     get_client_service,
@@ -178,4 +181,9 @@ async def match_member(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Can't match member twice",
+        )
+    except MatchLimitReachedError:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Limit of matches per day reached",
         )

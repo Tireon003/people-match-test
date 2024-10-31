@@ -5,10 +5,14 @@ from sqlalchemy import (
 )
 from typing import Sequence
 
-from app.models import MembersORM, MatchesORM
+from app.models import (
+    MembersORM,
+    MatchesORM,
+)
 from app.schemas import (
     MemberCreateSchema,
-    MembersFilter, Coordinates, Gender, OrderBy,
+    Gender,
+    OrderBy,
 )
 
 

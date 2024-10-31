@@ -8,7 +8,6 @@ from .member_schemas import (
     MemberFromDB,
     MemberCreateForm,
     MemberLogin,
-    MembersFilter,
     Coordinates,
 )
 from .token_schemas import Payload
@@ -19,7 +18,6 @@ __all__ = (
     'MemberCreateSchema',
     'MemberFromDB',
     'MemberCreateForm',
-    'MembersFilter',
     'MemberLogin',
     'Payload',
     'OrderBy',

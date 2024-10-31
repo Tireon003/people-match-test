@@ -1,7 +1,7 @@
 from email.mime.text import MIMEText
-from typing import Callable, TypeVar
-
+from redis import asyncio as aioredis
 from celery import Celery
+from celery.schedules import crontab
 import smtplib
 
 from app.config import settings
@@ -12,12 +12,15 @@ celery = Celery(
     broker_connection_retry_on_startup=True,
 )
 
-T = TypeVar("T")
+celery.conf.beat_schedule = {
+    "reset_daily_matches_counter": {
+        "task": "reset_daily_matches_counter",
+        "schedule": crontab(hour=0, minute=0),
+    },
+}
 
-CeleryTask = Callable[[Callable[..., T]], Callable[..., T]]
 
-
-@celery.task(type=CeleryTask)
+@celery.task
 def send_match_notification(
         email: str,
         matched_name: str,
@@ -35,3 +38,11 @@ def send_match_notification(
     with smtplib.SMTP_SSL(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
         server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
         server.sendmail(settings.SMTP_USER, email, message.as_string())
+
+
+@celery.task
+async def reset_daily_matches_counter() -> None:
+    redis = aioredis.from_url(settings.REDIS_URL)
+    keys = await redis.keys("matches_count:*")
+    for key in keys:
+        await redis.delete(key)

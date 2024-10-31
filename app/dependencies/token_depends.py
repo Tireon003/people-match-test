@@ -13,6 +13,6 @@ def get_token_payload(
             str,
             Depends(oauth2_scheme)
         ],
-) -> Payload:  # todo add user exists checking
+) -> Payload:
     payload = JwtTool.validate(access_token)
     return payload
